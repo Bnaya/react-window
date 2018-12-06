@@ -13,6 +13,7 @@ type RenderComponentProps<T> = {|
   isScrolling?: boolean,
   rowIndex: number,
   style: Object,
+  itemsRenderedCallbackParams: ItemsRenderedCallbackParams
 |};
 export type RenderComponent<T> = React$ComponentType<
   $Shape<RenderComponentProps<T>>
@@ -20,7 +21,7 @@ export type RenderComponent<T> = React$ComponentType<
 
 type ScrollDirection = 'forward' | 'backward';
 
-type OnItemsRenderedCallback = ({
+type ItemsRenderedCallbackParams = {
   overscanColumnStartIndex: number,
   overscanColumnStopIndex: number,
   overscanRowStartIndex: number,
@@ -29,7 +30,9 @@ type OnItemsRenderedCallback = ({
   visibleColumnStopIndex: number,
   visibleRowStartIndex: number,
   visibleRowStopIndex: number,
-}) => void;
+}
+
+type OnItemsRenderedCallback = (params: ItemsRenderedCallbackParams) => void;
 type OnScrollCallback = ({
   horizontalScrollDirection: ScrollDirection,
   scrollLeft: number,
@@ -56,6 +59,7 @@ export type Props<T> = {|
     columnIndex: number,
     data: T,
     rowIndex: number,
+    itemsRenderedCallbackParams: ItemsRenderedCallbackParams
   |}) => any,
   onItemsRendered?: OnItemsRenderedCallback,
   onScroll?: OnScrollCallback,
@@ -276,6 +280,31 @@ export default function createGridComponent({
       }
     }
 
+    _____watwat(): ItemsRenderedCallbackParams {
+      const [
+        overscanColumnStartIndex,
+        overscanColumnStopIndex,
+        visibleColumnStartIndex,
+        visibleColumnStopIndex,
+      ] = this._getHorizontalRangeToRender();
+      const [
+        overscanRowStartIndex,
+        overscanRowStopIndex,
+        visibleRowStartIndex,
+        visibleRowStopIndex,
+      ] = this._getVerticalRangeToRender();
+      return {
+        overscanColumnStartIndex,
+        overscanColumnStopIndex,
+        overscanRowStartIndex,
+        overscanRowStopIndex,
+        visibleColumnStartIndex,
+        visibleColumnStopIndex,
+        visibleRowStartIndex,
+        visibleRowStopIndex
+      };
+    }
+
     render() {
       const {
         children,
@@ -299,6 +328,7 @@ export default function createGridComponent({
         columnStopIndex,
       ] = this._getHorizontalRangeToRender();
       const [rowStartIndex, rowStopIndex] = this._getVerticalRangeToRender();
+      const itemsRenderedCallbackParams = this._____watwat();
 
       const items = [];
       if (columnCount > 0 && rowCount) {
@@ -317,9 +347,10 @@ export default function createGridComponent({
                 columnIndex,
                 data: itemData,
                 isScrolling: useIsScrolling ? isScrolling : undefined,
-                key: itemKey({ columnIndex, data: itemData, rowIndex }),
+                key: itemKey({ columnIndex, data: itemData, rowIndex, itemsRenderedCallbackParams }),
                 rowIndex,
                 style: this._getItemStyle(rowIndex, columnIndex),
+                itemsRenderedCallbackParams
               })
             );
           }
